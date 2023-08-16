@@ -1,5 +1,5 @@
 const express = require("express");
-const { send, status } = require("express/lib/response");
+// const { send, status } = require("express/lib/response");
 const app = express();
 const port = 8080;
 const { v4: uuid } = require("uuid");
@@ -19,7 +19,8 @@ app.get("/", (req, res) => {
 
 app.get("/:id", (req, res) => {
   const id = req.params.id;
-  const userId = users.find((element) => element.id === id);
+  const userId = users.find((user) => user.id === id);
+  console.log(userId);
   !userId ? res.send("not found") : res.send(userId);
 });
 
@@ -28,11 +29,12 @@ app.post(`/`, (req, res) => {
   if (!email || !password) {
     res.status(400).send("enter mail and password");
   } else {
-    if (
-      users.find(
-        (element) => element.email === email && element.password === password
-      )
-    ) {
+    const check = users.find(
+      (element) =>
+        element.email === email &&
+        bcrypt.compareSync(password, element.password)
+    );
+    if (check) {
       res.send("wrong credentials");
     } else {
       const newUser = {
@@ -46,70 +48,54 @@ app.post(`/`, (req, res) => {
   }
 });
 
-// app.post("/", (req, res) => {
-//     const { email, password } = req.body;
-//     if (!email || !password) {
-//       return res.status(400).send({ error: "enter email and password" });
-//     }
-//     const newUser = { id: uuid(), email, password };
-//     users.push(newUser);
-//     res.send(users);
-
-// });
-
 app.post("/search", (req, res) => {
   const { email, password } = req.body;
-  const chk = users.find(
+  const check = users.find(
     (element) =>
       element.email === email && bcrypt.compareSync(password, element.password)
   );
-  if (chk) {
+  if (check) {
     return res.status(200).send("User is connected");
   } else {
     return res.status(200).send("wrong credentials");
   }
 });
 
-// app.post("/:search", (req, res) => {
-//   const { email, password } = req.body;
-//   const userId = users.find((element) =>{
-//      element.email === email && element.password === password
-//     });
-//   if (userId) {
-//     return res.status(200).send({ error:"User is connected"});
-//   } else {
-//     return res.status(400).send("wrong credentials");
-//   }
-// });
-
 app.put("/:id", (req, res) => {
   const id = req.params.id;
   const { email, password } = req.body;
   const userIndex = users.findIndex((element) => element.id === id);
   const userId = users.find((element) => element.id === id);
-
+  console.log(userId);
   if (!userId) {
     res.status(400).send(`user ${userId} not find`);
+  }
+  if (!email || !password) {
+    res.status(400).send("enter mail and password");
   } else {
     users[userIndex] = { id: id, email, password };
     res.status(200).send(`User ID ${id} updated successfully`);
   }
 });
 
-app.put("/:id", (req, res) => {
-  const id = req.params.id;
-  const updateUser = req.body;
-  const userId = users.findIndex((element) => element.id === id);
+// app.put("/:id", (req, res) => {
+//   const id = req.params.id;
+//   const updateUser = req.body;
+//   const userId = users.findIndex((element) => element.id === id);
 
-  users[userId] = { ...users[userId], ...updateUser };
-  res.status(200).send(`User ID ${id} updated successfully`);
-});
+//   users[userId] = { ...users[userId], ...updateUser };
+//   res.status(200).send(`User ID ${id} updated successfully`);
+// });
 
 app.delete("/:id", (req, res) => {
   const id = req.params.id;
-  const userId = users.findIndex((element) => element.id === id);
-  users.splice(userId, 1);
-  res.status(200).send(`User ID ${id} delete`);
+  const userIndex = users.findIndex((user) => user.id === id);
+  if (userIndex !== -1) {
+    users.splice(userIndex, 1);
+    res.status(200).send(`User ID ${id} delete`);
+  } else {
+    res.send("user not found");
+  }
 });
 
 app.listen(port, () => {
