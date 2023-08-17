@@ -1,9 +1,13 @@
 const express = require("express");
-// const { send, status } = require("express/lib/response");
 const app = express();
 const port = 8080;
 const { v4: uuid } = require("uuid");
 const bcrypt = require("bcrypt");
+const passwordValidator = require("password-validator");
+const checkPassword = new passwordValidator();
+checkPassword.is().min(8).has().uppercase().has().lowercase();
+const emailValidator = require("email-validator");
+// const checkEmail = new emailValidator();
 const saltRounds = 3;
 app.use(express.json());
 
@@ -36,7 +40,12 @@ app.post(`/`, (req, res) => {
     );
     if (check) {
       res.send("wrong credentials");
-    } else {
+    }if(!emailValidator.validate(email)){
+      res.send("email invalid")
+    }if(!checkPassword.validate(password)){
+      res.send("password invalid")
+    }
+     else {
       const newUser = {
         id: uuid(),
         email,
